@@ -18,7 +18,7 @@ export default class TransformableImage extends Component {
       width: PropTypes.number,
       height: PropTypes.number,
     }),
-
+    fallbackUrl: PropTypes.string,
     enableTransform: PropTypes.bool,
     enableScale: PropTypes.bool,
     enableTranslate: PropTypes.bool,
@@ -39,7 +39,7 @@ export default class TransformableImage extends Component {
     this.state = {
       width: 0,
       height: 0,
-
+      source: props.source,
       imageLoaded: false,
       pixels: undefined,
       keyAcumulator: 1
@@ -101,10 +101,12 @@ export default class TransformableImage extends Component {
         style={this.props.style}>
         <Image
           {...this.props}
+          source={this.state.source}
           style={[this.props.style, {backgroundColor: 'transparent'}]}
           resizeMode={'contain'}
           onLoadStart={this.onLoadStart.bind(this)}
           onLoad={this.onLoad.bind(this)}
+          onLoadEnd={this.onLoadEnd.bind(this)}
           capInsets={{left: 0.1, top: 0.1, right: 0.1, bottom: 0.1}} //on iOS, use capInsets to avoid image downsampling
         />
       </ViewTransformer>
@@ -125,14 +127,29 @@ export default class TransformableImage extends Component {
     });
   }
 
+  onLoadEnd(e) {
+      this.props.onLoadEnd && this.props.onLoadEnd(e);
+      if (!this.state.imageLoaded && this.props.fallbackUrl) {
+          this.setState({
+            source: {
+              uri: this.props.fallbackUrl,
+            }
+          });
+      }
+  }
+
   onLayout(e) {
     let {width, height} = e.nativeEvent.layout;
     if (this.state.width !== width || this.state.height !== height) {
-      this.setState({
-        width: width,
-        height: height
-      });
+      this.setFallbackUrl();
     }
+  }
+
+  setFallbackUrl() {
+    this.setState({
+      width: width,
+      height: height
+    });
   }
 
   getImageSize(source) {
@@ -155,7 +172,11 @@ export default class TransformableImage extends Component {
             }
           },
           (error) => {
-            console.error('getImageSize...error=' + JSON.stringify(error) + ', source=' + JSON.stringify(source));
+            if (this.props.fallbackUrl && this.props.fallbackUrl !== source.uri) {
+              this.setFallbackUrl();
+            } else {
+              console.error('getImageSize...error=' + JSON.stringify(error) + ', source=' + JSON.stringify(source));
+            }
           })
       } else {
         console.warn('getImageSize...please provide pixels prop for local images');
