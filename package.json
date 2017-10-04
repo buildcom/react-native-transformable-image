@@ -17,6 +17,6 @@
   },
   "homepage": "https://github.com/buildcom/react-native-transformable-image#readme",
   "dependencies": {
-    "react-native-view-transformer": "buildcom/react-native-view-transformer#v0.0.29"
+    "react-native-view-transformer": "buildcom/react-native-view-transformer#v0.0.30"
   }
 }
